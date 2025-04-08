@@ -1,15 +1,11 @@
-import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest } from '@/lib/auth';
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export async function POST(request: NextRequest, props: Props) {
+export async function POST(
+  request: Request,
+  context: { params: { id: string } }
+) {
   try {
     const auth = await authenticateRequest(request);
     if (!auth) {
@@ -19,7 +15,7 @@ export async function POST(request: NextRequest, props: Props) {
       );
     }
 
-    const id = parseInt(props.params.id);
+    const id = parseInt(context.params.id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'ID inválido' },
