@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyJWT } from "@/lib/jwt";
-import type { NextRequest } from "next/server";
 
 export async function DELETE(
   request: NextRequest,
