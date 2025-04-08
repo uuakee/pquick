@@ -857,43 +857,61 @@ export default function SignUp() {
                 </div>
 
                 {/* Steps Indicator */}
-                <div className="w-full flex justify-between px-2">
-                  {steps.map((s, i) => {
-                    const StepIcon = s.icon;
-                    return (
-                      <div key={i} className="flex flex-col items-center">
-                        <div
-                          className={`relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
-                            i < step
-                              ? "border-[#f25100] bg-[#f25100] text-white"
-                              : i === step
-                              ? "border-[#f25100] text-[#f25100]"
-                              : "border-white/20 text-white/20"
-                          }`}
-                        >
-                          {i < step ? (
-                            <CheckCircle2 className="w-5 h-5" />
-                          ) : (
-                            <StepIcon className="w-5 h-5" />
-                          )}
-                          {i < steps.length - 1 && (
-                            <div
-                              className={`absolute left-full w-full h-[2px] transition-all duration-300 ${
-                                i < step ? "bg-[#f25100]" : "bg-white/20"
-                              }`}
-                            />
-                          )}
+                <div className="w-full max-w-[280px] mx-auto">
+                  <div className="relative flex items-center justify-between">
+                    {/* Linha de progresso base */}
+                    <div className="absolute h-0.5 w-full bg-white/10" />
+                    
+                    {/* Linha de progresso ativa */}
+                    <div 
+                      className="absolute h-0.5 bg-[#f25100] transition-all duration-500"
+                      style={{
+                        width: `${((step - 1) / (steps.length - 1)) * 100}%`
+                      }}
+                    />
+
+                    {/* Pontos de progresso */}
+                    {steps.map((s, i) => {
+                      const StepIcon = s.icon;
+                      const isActive = i === step - 1;
+                      const isCompleted = i < step - 1;
+                      
+                      return (
+                        <div key={i} className="relative flex flex-col items-center z-10">
+                          <div
+                            className={`
+                              flex items-center justify-center w-8 h-8 rounded-full 
+                              transition-all duration-300 
+                              ${isCompleted 
+                                ? "bg-[#f25100] text-white scale-100" 
+                                : isActive
+                                  ? "bg-[#f25100] text-white scale-110 ring-4 ring-[#f25100]/20"
+                                  : "bg-white/10 text-white/40"
+                              }
+                            `}
+                          >
+                            {isCompleted ? (
+                              <CheckCircle2 className="w-4 h-4" />
+                            ) : (
+                              <StepIcon className="w-4 h-4" />
+                            )}
+                          </div>
+
+                          {/* Título do passo */}
+                          <div 
+                            className={`
+                              absolute -bottom-6 left-1/2 -translate-x-1/2 
+                              whitespace-nowrap text-[10px] font-medium
+                              transition-all duration-300
+                              ${isActive ? "opacity-100 text-[#f25100]" : "opacity-0"}
+                            `}
+                          >
+                            {s.title}
+                          </div>
                         </div>
-                        <span
-                          className={`mt-2 text-xs font-medium transition-all duration-300 ${
-                            i === step ? "text-[#f25100]" : "text-white/40"
-                          }`}
-                        >
-                          {s.title}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="text-center space-y-2">

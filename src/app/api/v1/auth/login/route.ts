@@ -9,9 +9,14 @@ export async function POST(req: Request) {
     // Validar dados
     const validatedData = loginSchema.parse(body);
 
-    // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { email: validatedData.email },
+    // Buscar usuário por email ou username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: validatedData.identifier },
+          { username: validatedData.identifier }
+        ]
+      },
       include: {
         wallet: {
           select: {
@@ -37,6 +42,7 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+    
 
     // Verificar senha
     const isValid = await verifyPassword(validatedData.password, user.password);
@@ -48,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     // Gerar token
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.email, user.username);
 
     // Retornar resposta
     return NextResponse.json({

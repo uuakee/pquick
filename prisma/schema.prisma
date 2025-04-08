@@ -28,10 +28,32 @@ model User {
 
   wallet Wallet?
 
-  apiKeys ApiKey[]
-  Kyc     Kyc[]
+  apiKeys  ApiKey[]
+  Kyc      Kyc[]
+  webhooks Webhook[]
+
+  // Relações de transação
+  sentTransactions     Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
 
   @@map("users")
+}
+
+model Webhook {
+  id        Int         @id @default(autoincrement())
+  type      WebhookType
+  url       String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id])
+  userId    Int
+
+  @@unique([userId, type])
+}
+
+enum WebhookType {
+  QRCODE
+  PAYMENT
 }
 
 enum UserStatus {
@@ -113,4 +135,41 @@ enum segmentMarket {
   ENTERTAINMENT
   IGAMING
   OTHER
+}
+
+model Transaction {
+  id          Int               @id @default(autoincrement())
+  amount      Float
+  status      TransactionStatus @default(PENDING)
+  type        TransactionType
+  description String?
+
+  senderId Int
+  sender   User @relation("SentTransactions", fields: [senderId], references: [id])
+
+  receiverId Int
+  receiver   User @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  TRANSFER
+  WITHDRAWAL
+  DEPOSIT
 }

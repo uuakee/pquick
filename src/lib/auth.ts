@@ -20,7 +20,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
+  identifier: z.string().min(1, 'Email ou username é obrigatório'),
   password: z.string().min(6, 'Senha inválida'),
 });
 
@@ -33,8 +33,8 @@ export async function verifyPassword(password: string, hashedPassword: string) {
   return await compare(password, hashedPassword);
 }
 
-export function generateToken(userId: number) {
-  return sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+export function generateToken(userId: number, email: string, username: string) {
+  return sign({ userId, email, username }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string) {
