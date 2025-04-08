@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: any) {
   try {
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     if (!token) {
