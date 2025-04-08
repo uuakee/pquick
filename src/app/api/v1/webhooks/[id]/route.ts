@@ -17,7 +17,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    const id = context.params.id;
+    const { id } = context.params;
     if (!id) {
       return NextResponse.json(
         { error: "ID do webhook não fornecido" },
