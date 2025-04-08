@@ -1,13 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest } from '@/lib/auth';
 
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
 export async function POST(
-  req: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  { params }: RouteParams
 ) {
   try {
-    const auth = await authenticateRequest(req);
+    const auth = await authenticateRequest(request);
     if (!auth) {
       return NextResponse.json(
         { error: 'Não autorizado' },
@@ -15,7 +21,7 @@ export async function POST(
       );
     }
 
-    const id = parseInt(context.params.id);
+    const id = parseInt(params.id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'ID inválido' },
