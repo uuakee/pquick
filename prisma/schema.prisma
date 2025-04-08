@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int           @id @default(autoincrement())
+  email    String        @unique
+  password String
+  segment  segmentMarket
+  phone    String        @unique
+  cnpj     String        @unique
+  username String        @unique
+  name     String
+  address  String
+  city     String
+  state    String
+  zip      String
+
+  status UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallet Wallet?
+
+  apiKeys ApiKey[]
+  Kyc     Kyc[]
+
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model Wallet {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique // Garante que cada usuário tenha apenas uma wallet
+  user              User     @relation(fields: [userId], references: [id])
+  balance           Float    @default(0)
+  blocked_balance   Float    @default(0)
+  available_balance Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("wallets")
+}
+
+model ApiKey {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  client_id     String    @unique
+  client_secret String
+  status        KeyStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model Kyc {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  document_type   DocumentType
+  document_number String
+  document_front  String
+  document_back   String
+  document_selfie String
+  document_status KycStatus    @default(PENDING)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId])
+  @@map("kycs")
+}
+
+enum DocumentType {
+  CPF
+  CNPJ
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum KeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum segmentMarket {
+  ECOMMERCE
+  MARKETPLACE
+  SAAS
+  MARKETING
+  FINANCE
+  EDUCATION
+  HEALTH
+  ENTERTAINMENT
+  IGAMING
+  OTHER
+}
