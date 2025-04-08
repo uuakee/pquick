@@ -4,7 +4,7 @@ import { authenticateRequest } from '@/lib/auth';
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const auth = await authenticateRequest(req);
@@ -15,7 +15,7 @@ export async function POST(
       );
     }
 
-    const id = parseInt(params.id);
+    const id = parseInt(context.params.id);
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'ID inválido' },
