@@ -1,10 +1,10 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest } from '@/lib/auth';
 
 export async function POST(
-  request: NextRequest,
-  context: { params: { id: string } }
+  request: Request,
+  { params }: any
 ) {
   try {
     const auth = await authenticateRequest(request);
@@ -15,8 +15,7 @@ export async function POST(
       );
     }
 
-    const { id } = context.params;
-    const parsedId = parseInt(id, 10);
+    const parsedId = parseInt(params.id, 10);
     if (isNaN(parsedId)) {
       return NextResponse.json(
         { error: 'ID inválido' },
