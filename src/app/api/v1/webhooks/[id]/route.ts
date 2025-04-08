@@ -4,7 +4,7 @@ import { verifyJWT } from "@/lib/jwt";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
