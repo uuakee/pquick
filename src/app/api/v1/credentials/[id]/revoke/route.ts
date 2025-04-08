@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authenticateRequest } from '@/lib/auth';
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
@@ -15,8 +15,8 @@ export async function POST(
       );
     }
 
-    const id = parseInt(context.params.id);
-    if (isNaN(id)) {
+    const { id } = context.params;
+    if (isNaN(parseInt(id))) {
       return NextResponse.json(
         { error: 'ID inválido' },
         { status: 400 }
@@ -26,7 +26,7 @@ export async function POST(
     // Verificar se a credencial existe e pertence ao usuário
     const apiKey = await prisma.apiKey.findFirst({
       where: {
-        id,
+        id: parseInt(id),
         userId: auth.userId,
       },
     });
@@ -47,7 +47,7 @@ export async function POST(
 
     // Revogar a credencial
     const updatedApiKey = await prisma.apiKey.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: { status: 'REVOKED' },
     });
 

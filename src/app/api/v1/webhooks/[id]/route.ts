@@ -1,10 +1,10 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyJWT } from "@/lib/jwt";
 
 export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -17,7 +17,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const id = params.id;
     if (!id) {
       return NextResponse.json(
         { error: "ID do webhook não fornecido" },
@@ -25,6 +25,7 @@ export async function DELETE(
       );
     }
 
+    // Verificar se o webhook pertence ao usuário
     const webhook = await prisma.webhook.findFirst({
       where: {
         id: parseInt(id),
@@ -53,4 +54,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+} 
