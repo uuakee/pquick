@@ -10,6 +10,7 @@ import {
   QrCode,
   Wallet,
   LogOut,
+  Loader2,
 } from "lucide-react"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -109,10 +110,44 @@ interface User {
   username: string;
 }
 
+interface Platform {
+  name: string;
+  url: string;
+  logo_url: string;
+  color: string;
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [activeItem, setActiveItem] = React.useState("/dashboard")
   const [user, setUser] = React.useState<User | null>(null)
+  const [platform, setPlatform] = React.useState<Platform | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
   const router = useRouter()
+
+  React.useEffect(() => {
+    const fetchPlatform = async () => {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem("token");
+        const response = await fetch("/api/v1/admin/platform", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlatform(data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar configurações da plataforma:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlatform();
+  }, []);
 
   React.useEffect(() => {
     const userStr = localStorage.getItem("user")
@@ -142,22 +177,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
                 <a href="/dashboard" className="relative">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#f25100] to-[#ff6b1a] shadow-lg">
-                    <Image 
-                      src="/plataform/logo-collapse.svg" 
-                      alt="PayQuick" 
-                      width={20} 
-                      height={20}
-                      className="drop-shadow"
-                    />
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg shadow-lg"
+                    style={{ 
+                      background: platform?.color 
+                        ? `linear-gradient(to bottom right, ${platform.color}, ${platform.color})`
+                        : "linear-gradient(to bottom right, #64748b, #94a3b8)"
+                    }}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    ) : (
+                      platform?.logo_url && (
+                        <Image 
+                          src={platform.logo_url}
+                          alt={platform.name}
+                          width={20} 
+                          height={20}
+                          className="drop-shadow"
+                        />
+                      )
+                    )}
                     <div className="absolute inset-0 rounded-lg bg-white/20 opacity-0 transition-opacity hover:opacity-100" />
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold tracking-tight line-clamp-1">
-                      {user?.name || "PayQuick"}
+                      {user?.name || platform?.name || "..."}
                     </span>
                     <span className="text-xs text-muted-foreground line-clamp-1">
-                      PayQuick v1.0
+                      {platform?.name || "..."} v1.0
                     </span>
                   </div>
                 </a>
@@ -187,20 +234,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           href={item.url} 
                           className={cn(
                             "group relative flex items-center gap-3 transition-colors",
-                            activeItem === item.url && "text-[#f25100]"
+                            activeItem === item.url && "text-foreground"
                           )}
+                          style={activeItem === item.url ? { color: platform?.color || "#64748b" } : undefined}
                         >
                           <motion.div
                             initial={false}
                             animate={{
-                              backgroundColor: activeItem === item.url ? "rgba(242, 81, 0, 0.1)" : "transparent",
+                              backgroundColor: activeItem === item.url 
+                                ? platform?.color 
+                                  ? `${platform.color}19` 
+                                  : "rgba(100, 116, 139, 0.1)"
+                                : "transparent",
                             }}
                             className="absolute inset-0 rounded-md"
                           />
                           <motion.div
                             initial={false}
                             animate={{
-                              color: activeItem === item.url ? "#f25100" : "currentColor",
+                              color: activeItem === item.url 
+                                ? platform?.color || "#64748b"
+                                : "currentColor",
                             }}
                             className="relative"
                           >
@@ -210,7 +264,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           {activeItem === item.url && (
                             <motion.div
                               layoutId="activeItem"
-                              className="absolute -left-3 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-[#f25100]"
+                              className="absolute -left-3 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full"
+                              style={{ backgroundColor: platform?.color || "#64748b" }}
                             />
                           )}
                         </a>

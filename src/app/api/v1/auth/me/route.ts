@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return new NextResponse("Não autorizado", { status: 401 });
     }
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
     if (!decoded) {
       return new NextResponse("Token inválido", { status: 401 });
     }
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
         name: true,
         email: true,
         level: true,
+        role: true,
         totalRevenue: true,
         monthlyRevenue: true,
         transactionCount: true,

@@ -6,6 +6,7 @@ interface User {
   name: string;
   email: string;
   level: UserLevel;
+  role: "USER" | "ADMIN";
   totalRevenue: number;
   monthlyRevenue: number;
   transactionCount: number;

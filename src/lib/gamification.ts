@@ -18,7 +18,7 @@ export const LEVEL_BADGES = {
 } as const;
 
 export const LEVEL_COLORS = {
-  BRONZE: 'text-orange-600',
+  BRONZE: 'text-orange-700',
   SILVER: 'text-gray-400',
   GOLD: 'text-yellow-500',
   PLATINUM: 'text-blue-400',
@@ -43,6 +43,9 @@ export async function checkAndUpdateUserLevel(userId: number) {
           createdAt: {
             gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
       }
     }
@@ -56,16 +59,21 @@ export async function checkAndUpdateUserLevel(userId: number) {
     0
   );
 
-  // Determinar novo nível
-  let newLevel = user.level;
-  for (const [level, threshold] of Object.entries(LEVEL_THRESHOLDS)) {
-    if (monthlyRevenue >= threshold) {
-      newLevel = level as UserLevel;
-    }
+  // Determinar novo nível baseado no faturamento acumulado
+  let newLevel = 'BRONZE' as UserLevel;
+  
+  if (monthlyRevenue >= LEVEL_THRESHOLDS.CHALLENGER) {
+    newLevel = 'CHALLENGER';
+  } else if (monthlyRevenue >= LEVEL_THRESHOLDS.PLATINUM) {
+    newLevel = 'PLATINUM';
+  } else if (monthlyRevenue >= LEVEL_THRESHOLDS.GOLD) {
+    newLevel = 'GOLD';
+  } else if (monthlyRevenue >= LEVEL_THRESHOLDS.SILVER) {
+    newLevel = 'SILVER';
   }
 
-  // Se houve mudança de nível
-  if (newLevel !== user.level) {
+  // Se houve mudança de nível ou se o faturamento mudou
+  if (newLevel !== user.level || monthlyRevenue !== user.monthlyRevenue) {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -81,29 +89,17 @@ export async function checkAndUpdateUserLevel(userId: number) {
       }
     });
 
-    // Retornar informações para notificação
-    return {
-      previousLevel: user.level,
-      newLevel,
-      benefits: LEVEL_BENEFITS[newLevel],
-      badge: LEVEL_BADGES[newLevel],
-      color: LEVEL_COLORS[newLevel]
-    };
-  }
-
-  // Atualizar métricas mesmo sem mudança de nível
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      monthlyRevenue,
-      totalRevenue: {
-        increment: monthlyRevenue
-      },
-      transactionCount: {
-        increment: user.receivedTransactions.length
-      }
+    // Retornar informações para notificação apenas se mudou de nível
+    if (newLevel !== user.level) {
+      return {
+        previousLevel: user.level,
+        newLevel,
+        benefits: LEVEL_BENEFITS[newLevel],
+        badge: LEVEL_BADGES[newLevel],
+        color: LEVEL_COLORS[newLevel]
+      };
     }
-  });
+  }
 
   return null;
 }

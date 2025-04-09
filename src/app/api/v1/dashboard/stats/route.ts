@@ -1,93 +1,91 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { authenticateRequest } from '@/lib/auth';
-import { Prisma } from '@prisma/client';
+import { verifyToken } from '@/lib/auth';
 
-type UserWithRelations = Prisma.UserGetPayload<{
-  include: {
-    wallet: true;
-    sentTransactions: true;
-    receivedTransactions: true;
-  }
-}>;
-
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    // Autenticar requisição
-    const auth = await authenticateRequest(req);
-    if (!auth) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      );
+    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+    
+    if (!token) {
+      return new NextResponse("Não autorizado", { status: 401 });
     }
 
-    // Buscar dados do usuário e carteira
-    const user = await prisma.user.findUnique({
-      where: { id: auth.userId },
-      include: {
-        wallet: true,
-        sentTransactions: true,
-        receivedTransactions: true,
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return new NextResponse("Token inválido", { status: 401 });
+    }
+
+    // Buscar carteira do usuário
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId: decoded.userId }
+    });
+
+    if (!wallet) {
+      return new NextResponse("Carteira não encontrada", { status: 404 });
+    }
+
+    // Buscar todas as transações do último mês
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    // Todas as transações (para total e contagem)
+    const allTransactions = await prisma.transaction.findMany({
+      where: {
+        OR: [
+          { senderId: decoded.userId },
+          { receiverId: decoded.userId }
+        ],
+        createdAt: {
+          gte: lastMonth
+        }
       }
-    }) as UserWithRelations | null;
+    });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
-      );
-    }
+    // Apenas transações de depósito (para ticket médio e média diária)
+    const depositTransactions = await prisma.transaction.findMany({
+      where: {
+        receiverId: decoded.userId,
+        type: "DEPOSIT",
+        createdAt: {
+          gte: lastMonth
+        }
+      }
+    });
 
-    // Juntar todas as transações
-    const allTransactions = [
-      ...user.sentTransactions,
-      ...user.receivedTransactions
-    ];
+    // Calcular total de todas as transações
+    const totalTransactions = allTransactions.reduce((acc, tx) => {
+      // Soma o valor absoluto de todas as transações, independente de ser enviada ou recebida
+      return acc + Math.abs(tx.amount);
+    }, 0);
 
-    // Calcular estatísticas
-    const totalTransactions = allTransactions.reduce(
-      (sum, tx) => sum + (tx.amount || 0),
-      0
-    );
-
-    const transactionCount = allTransactions.length;
-
-    const ticketMedio = transactionCount > 0
-      ? totalTransactions / transactionCount
+    // Calcular estatísticas apenas para depósitos
+    const totalDeposits = depositTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+    const ticketMedio = depositTransactions.length > 0 
+      ? totalDeposits / depositTransactions.length 
       : 0;
 
-    // Calcular média diária (últimos 7 dias)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Calcular média diária de depósitos
+    const hoje = new Date();
+    const diasNoMes = Math.ceil((hoje.getTime() - lastMonth.getTime()) / (1000 * 60 * 60 * 24));
+    const mediaDiaria = totalDeposits / diasNoMes;
 
-    const recentTransactions = allTransactions.filter(
-      tx => new Date(tx.createdAt) > sevenDaysAgo
-    );
-
-    const mediaDiaria = recentTransactions.length > 0
-      ? recentTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0) / 7
-      : 0;
-
-    // Retornar estatísticas
-    return NextResponse.json({
+    const stats = {
       wallet: {
-        balance: user.wallet?.balance || 0,
-        blocked_balance: user.wallet?.blocked_balance || 0,
-        available_balance: user.wallet?.available_balance || 0,
+        balance: wallet.balance,
+        blocked_balance: wallet.blocked_balance,
+        available_balance: wallet.available_balance,
       },
       stats: {
         total_transactions: totalTransactions,
-        transaction_count: transactionCount,
+        transaction_count: allTransactions.length,
         ticket_medio: ticketMedio,
         media_diaria: mediaDiaria,
       }
-    });
+    };
+
+    return NextResponse.json(stats);
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    console.error("[DASHBOARD_STATS]", error);
+    return new NextResponse("Erro interno", { status: 500 });
   }
 } 

@@ -4,8 +4,16 @@ import { z } from 'zod';
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
+import { SignJWT, jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+type Role = 'USER' | 'ADMIN';
+
+interface TokenPayload {
+  userId: number;
+  role: Role;
+}
 
 // Schemas de validação
 export const registerSchema = z.object({
@@ -40,10 +48,11 @@ export function generateToken(userId: number, email: string, username: string) {
   return sign({ userId, email, username }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-export function verifyToken(token: string) {
+export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
-    const decoded = verify(token, JWT_SECRET);
-    return decoded as { userId: number };
+    const decoded = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+    const payload = decoded.payload as unknown as TokenPayload;
+    return payload;
   } catch (error) {
     return null;
   }
@@ -55,7 +64,7 @@ export async function authenticateRequest(req: Request) {
     const token = req.headers.get('authorization')?.replace('Bearer ', '');
     if (!token) return null;
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
     if (!decoded) return null;
 
     return decoded;
@@ -115,4 +124,16 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   }
-}; 
+};
+
+export async function signToken(userId: number, role: Role): Promise<string> {
+  const token = await new SignJWT({ 
+    userId: userId,
+    role: role 
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
+    .sign(new TextEncoder().encode(JWT_SECRET));
+
+  return token;
+} 

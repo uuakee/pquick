@@ -3,16 +3,21 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthGuard } from "@/components/auth-guard";
+import { prisma } from "@/lib/prisma";
 
 const spaceGrotesk = Space_Grotesk({ 
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "PayQuick - Gateway de Pagamentos",
-  description: "Sua solução completa para pagamentos online",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const platform = await prisma.plataform.findFirst();
+
+  return {
+    title: platform?.name ? `${platform.name} - Gateway de Pagamentos` : "Gateway de Pagamentos",
+    description: platform?.description || "Sua solução completa para pagamentos online",
+  };
+}
 
 export default function RootLayout({
   children,

@@ -37,18 +37,12 @@ export function UserLevelBadge({ level, monthlyRevenue, showProgress = true, cla
             alt={`Nível ${level}`}
             width={32}
             height={32}
-            className="animate-pulse"
+            className=""
           />
           <div className="flex flex-col">
             <span className={`text-sm font-medium ${LEVEL_COLORS[level]}`}>
               Nível {level.charAt(0) + level.slice(1).toLowerCase()}
             </span>
-            {/* {showProgress && nextLevel && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Progress value={progress} className="h-1 w-20" />
-                <span>{Math.round(progress)}%</span>
-              </div>
-            )} */}
           </div>
         </div>
       </HoverCardTrigger>

@@ -24,6 +24,8 @@ model User {
   status UserStatus @default(ACTIVE)
   level  UserLevel  @default(BRONZE)
 
+  role UserRole @default(USER)
+
   // Métricas de gamificação
   totalRevenue     Float    @default(0)
   monthlyRevenue   Float    @default(0)
@@ -46,6 +48,52 @@ model User {
   @@map("users")
 }
 
+model Plataform {
+  id          Int      @id @default(1)
+  name        String
+  url         String
+  color       String
+  logo_url    String?
+  description String   @default("Sua solução completa para pagamentos online")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("plataforms")
+}
+
+enum AdquirenteStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Adquirentes {
+  id Int @id @default(autoincrement())
+
+  // PrimePag
+  primepag_status AdquirenteStatus @default(INACTIVE)
+  primepag_uri    String?
+  primepag_ci     String?
+  primepag_cs     String?
+  primepag_name   String?          @default("PrimePag")
+
+  // Zendry
+  zendry_status AdquirenteStatus @default(INACTIVE)
+  zendry_uri    String?
+  zendry_ci     String?
+  zendry_cs     String?
+  zendry_name   String?          @default("Zendry")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("adquirentes")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model Webhook {
   id        Int         @id @default(autoincrement())
   type      WebhookType
@@ -56,6 +104,7 @@ model Webhook {
   userId    Int
 
   @@unique([userId, type])
+  @@map("webhooks")
 }
 
 enum WebhookType {
@@ -150,9 +199,10 @@ model Transaction {
   status      TransactionStatus @default(PENDING)
   type        TransactionType
   description String?
+  metadata    Json?
 
-  senderId Int
-  sender   User @relation("SentTransactions", fields: [senderId], references: [id])
+  senderId Int?
+  sender   User? @relation("SentTransactions", fields: [senderId], references: [id])
 
   receiverId Int
   receiver   User @relation("ReceivedTransactions", fields: [receiverId], references: [id])
@@ -171,6 +221,7 @@ enum TransactionStatus {
   FAILED
   REFUNDED
   CANCELLED
+  INFRACTION
 }
 
 enum TransactionType {
