@@ -16,8 +16,12 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
+import { useUser } from "@/hooks/useUser";
+import { Loader2 } from "lucide-react";
+import { UserLevelBadge } from "@/components/user-level-badge";
 
 export default function ExtratoPage() {
+  const { user, isLoading } = useUser();
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -39,11 +43,14 @@ export default function ExtratoPage() {
             </Breadcrumb>
           </div>
           <div className="flex items-center gap-2">
-            <Image src="/levels/top-tier.svg" alt="Medal Bronze" width={32} height={32} />
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Nível Challenger</span>
-              <span className="text-xs text-muted-foreground underline cursor-pointer hover:text-primary">Ver perfil</span>
-            </div>
+            {isLoading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <UserLevelBadge 
+                level={user?.level || "BRONZE"} 
+                monthlyRevenue={user?.wallet?.balance || 0} 
+              />
+            )}
           </div>
         </header>
 

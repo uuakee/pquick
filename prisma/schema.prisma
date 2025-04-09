@@ -22,6 +22,13 @@ model User {
   zip      String
 
   status UserStatus @default(ACTIVE)
+  level  UserLevel  @default(BRONZE)
+
+  // Métricas de gamificação
+  totalRevenue     Float    @default(0)
+  monthlyRevenue   Float    @default(0)
+  transactionCount Int      @default(0)
+  lastLevelUpdate  DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -172,4 +179,12 @@ enum TransactionType {
   TRANSFER
   WITHDRAWAL
   DEPOSIT
+}
+
+enum UserLevel {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  CHALLENGER
 }

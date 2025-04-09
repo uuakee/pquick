@@ -30,6 +30,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Image from "next/image";
+import { UserLevelBadge } from "@/components/user-level-badge";
+import { UserLevel } from "@prisma/client";
 
 interface StatCardProps {
   icon: React.ReactNode
@@ -91,6 +93,14 @@ export default function Page() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [userLevel, setUserLevel] = useState<UserLevel>(UserLevel.BRONZE);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.level) {
+      setUserLevel(user.level as UserLevel);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -154,11 +164,7 @@ export default function Page() {
             </Breadcrumb>
           </div>
           <div className="flex items-center gap-2">
-            <Image src="/levels/top-tier.svg" alt="Medal Bronze" width={32} height={32} />
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Nível Challenger</span>
-              <span className="text-xs text-muted-foreground underline cursor-pointer hover:text-primary">Ver perfil</span>
-            </div>
+            <UserLevelBadge level={userLevel} monthlyRevenue={stats?.wallet?.balance || 0} />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">

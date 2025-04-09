@@ -15,13 +15,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import Image from "next/image";
 import { UserLevelBadge } from "@/components/user-level-badge";
 import { useUser } from "@/hooks/useUser";
 import { Loader2 } from "lucide-react";
 
-export default function PerfilPage() {
+export default function TransferenciasPage() {
   const { user, isLoading } = useUser();
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -37,7 +37,7 @@ export default function PerfilPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Infrações</BreadcrumbPage>
+                  <BreadcrumbPage>Transferências</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -57,9 +57,9 @@ export default function PerfilPage() {
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h1 className="text-2xl font-semibold">Infrações</h1>
+              <h1 className="text-2xl font-semibold">Transferências</h1>
               <p className="text-sm text-muted-foreground">
-                Visualize todas as infrações em andamento e concluídas na sua operação.
+                Visualize todas as transferências em andamento e concluídas na sua operação.
               </p>
             </div>
           </div>

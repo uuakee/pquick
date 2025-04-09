@@ -1,6 +1,9 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
 import { z } from 'zod';
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "./prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -59,4 +62,57 @@ export async function authenticateRequest(req: Request) {
   } catch (error) {
     return null;
   }
-} 
+}
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Senha", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        // Aqui você deve implementar a verificação da senha
+        // Por enquanto, vamos apenas retornar o usuário
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          name: user.name,
+        };
+      }
+    })
+  ],
+  pages: {
+    signIn: "/",
+  },
+  session: {
+    strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    }
+  }
+}; 

@@ -9,11 +9,13 @@ import {
   AlertTriangle,
   QrCode,
   Wallet,
+  LogOut,
 } from "lucide-react"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Space_Grotesk } from "next/font/google"
+import { useRouter } from "next/navigation"
 
 import {
   Sidebar,
@@ -110,6 +112,7 @@ interface User {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [activeItem, setActiveItem] = React.useState("/dashboard")
   const [user, setUser] = React.useState<User | null>(null)
+  const router = useRouter()
 
   React.useEffect(() => {
     const userStr = localStorage.getItem("user")
@@ -124,6 +127,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const pathname = window.location.pathname
     setActiveItem(pathname)
   }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    router.push("/")
+  }
 
   return (
     <div className={spaceGrotesk.className}>
@@ -210,6 +219,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   ))}
                 </React.Fragment>
               ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup className="mt-auto">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={handleLogout}
+                  className="text-red-500 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
